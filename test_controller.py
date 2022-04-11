@@ -18,6 +18,8 @@ pub_socket.connect("ipc:///tmp/robotics/pub.ipc")
 sub_socket = context.socket(zmq.SUB)
 sub_socket.connect("ipc:///tmp/robotics/sub.ipc")
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"state")
+sub_socket.setsockopt(zmq.SUBSCRIBE, b"collision")
+
 
 s = 1
 k = 0.5
@@ -40,4 +42,4 @@ while True:
         [b"wheel_speeds", json.dumps(wheel_speeds).encode()])
 
     topic, message = sub_socket.recv_multipart()
-    print(json.loads(message.decode()))
+    print(topic, ":", json.loads(message.decode()))
