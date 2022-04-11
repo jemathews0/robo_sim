@@ -19,6 +19,7 @@ sub_socket = context.socket(zmq.SUB)
 sub_socket.connect("ipc:///tmp/robotics/sub.ipc")
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"state")
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"collision")
+sub_socket.setsockopt(zmq.SUBSCRIBE, b"lidar")
 
 
 s = 1
