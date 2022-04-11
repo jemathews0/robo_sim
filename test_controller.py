@@ -8,6 +8,7 @@ Created on Mon Apr 11 09:16:20 2022
 
 import zmq
 import time
+import json
 
 context = zmq.Context()
 
@@ -16,19 +17,27 @@ pub_socket.connect("ipc:///tmp/robotics/pub.ipc")
 
 sub_socket = context.socket(zmq.SUB)
 sub_socket.connect("ipc:///tmp/robotics/sub.ipc")
-sub_socket.setsockopt(zmq.SUBSCRIBE, b"")
+sub_socket.setsockopt(zmq.SUBSCRIBE, b"state")
 
+s = 1
+k = 0.5
+r = 0.5
+w = 1
+k_dir = 1
 
 while True:
-    print("sending hello")
-    pub_socket.send("hello".encode())
-    #  Wait for next request from client
-    try:
-        message = sub_socket.recv(flags=zmq.NOBLOCK)
-        print(message.decode())
-    except zmq.ZMQError:
-        print("nothing received")
-        pass
+    if k > 1:
+        k_dir = -1
+    elif k < -1:
+        k_dir = 1
+    k += k_dir*0.01
 
-    #  Do some 'work'
-    time.sleep(1)
+    omega1 = (s+w*k)/(2*r)
+    omega2 = (s-w*k)/(2*r)
+
+    wheel_speeds = {"omega1": omega1, "omega2": omega2}
+    pub_socket.send_multipart(
+        [b"wheel_speeds", json.dumps(wheel_speeds).encode()])
+
+    topic, message = sub_socket.recv_multipart()
+    print(json.loads(message.decode()))

@@ -19,5 +19,5 @@ sub_socket.setsockopt(zmq.SUBSCRIBE, b"")
 
 
 while True:
-    message = sub_socket.recv()
-    pub_socket.send(message)
+    msg_parts = sub_socket.recv_multipart()
+    pub_socket.send_multipart(msg_parts)
