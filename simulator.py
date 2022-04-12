@@ -168,9 +168,9 @@ def producer():
             marks_str = json.dumps(marks_dict).encode()
             pub_socket.send_multipart([b"landmarks", marks_str])
 
-        state_dict = {"x": state[0], "y": state[1], "theta": state[2]}
-        state_str = json.dumps(state_dict).encode()
-        pub_socket.send_multipart([b"state", state_str])
+        # state_dict = {"x": state[0], "y": state[1], "theta": state[2]}
+        # state_str = json.dumps(state_dict).encode()
+        # pub_socket.send_multipart([b"state", state_str])
 
         lidar_dict = {"distances": dists}
         lidar_str = json.dumps(lidar_dict).encode()
