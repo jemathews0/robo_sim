@@ -104,6 +104,7 @@ def producer():
     omega1 = 5
     omega2 = 5.6
     # timestemp = 0.02
+    count = 0
     while True:
         #  Wait for next request from client
         try:
@@ -111,6 +112,7 @@ def producer():
             message_json = json.loads(message_str)
             omega1 = message_json["omega1"]
             omega2 = message_json["omega2"]
+            # print(omega1, omega2)
         except zmq.ZMQError:
             print("nothing received")
 
@@ -141,6 +143,8 @@ def producer():
         lidar_str = json.dumps(lidar_dict).encode()
         pub_socket.send_multipart([b"lidar", lidar_str])
 
+        # print(count)
+        count += 1
         yield state, lines
 
 
@@ -202,4 +206,4 @@ def animate(data):
 animation = anim.FuncAnimation(
     fig, animate, producer, interval=timestep*1000)
 
-# plt.show(block=True)
+plt.show(block=True)
