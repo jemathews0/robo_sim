@@ -92,6 +92,13 @@ def lidar(state, obstacles):
     return lines
 
 
+def add_wheel_noise(omega1, omega2):
+    sigma = 0.5
+    omega1 += np.random.normal(0, sigma)
+    omega2 += np.random.normal(0, sigma)
+    return omega1, omega2
+
+
 def producer():
     state = [start[0], start[1], 0]
     omega1 = 5
@@ -112,8 +119,10 @@ def producer():
         # simulate one time step
         # yield the result
 
+        noisy_omega1, noisy_omega2 = add_wheel_noise(omega1, omega2)
+
         res = solve_ivp(robot1.deriv, [0, timestep],
-                        state, args=[[omega1, omega2], 0])
+                        state, args=[[noisy_omega1, noisy_omega2], 0])
 
         if not robot1.collides(state, obstacles):
             state = res.y[:, -1]
