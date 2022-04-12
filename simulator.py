@@ -50,6 +50,11 @@ def load_map(filename):
 
 obstacles, start, goal = load_map("map1.json")
 
+landmarks = []
+for obs in obstacles:
+    landmarks += obs.boundary.coords
+landmarks = np.array(landmarks)
+
 fig, [ax1, ax2] = plt.subplots(1, 2)
 
 for obs in obstacles:
@@ -99,7 +104,18 @@ def add_wheel_noise(omega1, omega2):
     return omega1, omega2
 
 
+def visible_landmarks(state, landmarks):
+    landmark_diffs = landmarks-np.array([state[0], state[1]])
+    landmark_dists = np.linalg.norm(landmark_diffs, axis=1)
+    landmark_thetas = np.arctan2(landmark_diffs[:, 1], landmark_diffs[:, 0])
+
+    vis = np.where((landmark_dists < 0.5) & (
+        landmark_thetas > -np.pi/2) & (landmark_thetas < np.pi/2))
+    return vis[0], landmark_dists[vis[0]], landmark_thetas[vis[0]]
+
+
 def producer():
+    global state
     state = [start[0], start[1], 0]
     omega1 = 5
     omega2 = 5.6
@@ -114,7 +130,8 @@ def producer():
             omega2 = message_json["omega2"]
             # print(omega1, omega2)
         except zmq.ZMQError:
-            print("nothing received")
+            # print("nothing received")
+            pass
 
         # if new controls info have arrived
         #   set the controls values
@@ -134,6 +151,22 @@ def producer():
 
         lines = lidar(state, obstacles)
         dists = [line.length for line in lines]
+
+        marks, mark_dists, mark_thetas = visible_landmarks(state, landmarks)
+        if len(marks) > 0:
+            # print([index[0] for index in marks])
+            marks_dict = {}
+            for index, dist, theta in zip(marks, mark_dists, mark_thetas):
+                mark = landmarks[index]
+                marks_dict[int(index)] = {}
+                marks_dict[int(index)]["dist"] = dist + \
+                    np.random.normal(0, 0.05)
+                marks_dict[int(index)]["theta"] = theta + \
+                    np.random.normal(0, 0.01)
+
+            print(marks_dict)
+            marks_str = json.dumps(marks_dict).encode()
+            pub_socket.send_multipart([b"landmarks", marks_str])
 
         state_dict = {"x": state[0], "y": state[1], "theta": state[2]}
         state_str = json.dumps(state_dict).encode()
