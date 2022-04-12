@@ -30,7 +30,8 @@ sub_socket.setsockopt(zmq.SUBSCRIBE, b"wheel_speeds")
 robot_width = 0.1
 robot_length = 0.2
 robot_radius = 0.05
-robot = dd.DifferentialDrive(robot_width, robot_length, robot_radius)
+robot1 = dd.DifferentialDrive(robot_width, robot_length, robot_radius)
+robot2 = dd.DifferentialDrive(robot_width, robot_length, robot_radius)
 timestep = 0.02
 
 
@@ -49,14 +50,20 @@ def load_map(filename):
 
 obstacles, start, goal = load_map("map1.json")
 
-fig, ax = plt.subplots()
+fig, [ax1, ax2] = plt.subplots(1, 2)
 
 for obs in obstacles:
     patch = dc.PolygonPatch(obs)
-    ax.add_patch(patch)
+    ax1.add_patch(patch)
+    patch = dc.PolygonPatch(obs)
+    ax2.add_patch(patch)
 
-ax.plot(start[0], start[1], 'g.')
-ax.plot(goal[0], goal[1], 'r.')
+
+ax1.plot(start[0], start[1], 'g.')
+ax1.plot(goal[0], goal[1], 'r.')
+
+ax2.plot(start[0], start[1], 'g.')
+ax2.plot(goal[0], goal[1], 'r.')
 
 
 def lidar(state, obstacles):
@@ -105,10 +112,10 @@ def producer():
         # simulate one time step
         # yield the result
 
-        res = solve_ivp(robot.deriv, [0, timestep],
+        res = solve_ivp(robot1.deriv, [0, timestep],
                         state, args=[[omega1, omega2], 0])
 
-        if not robot.collides(state, obstacles):
+        if not robot1.collides(state, obstacles):
             state = res.y[:, -1]
         else:
             pub_socket.send_multipart([b"collision", b"{}"])
@@ -128,34 +135,59 @@ def producer():
         yield state, lines
 
 
-patches = robot.draw(ax, [0, 0, 0])
-for patch in patches:
-    ax.add_patch(patch)
+state_0 = [start[0], start[1], 0]
+patches1 = robot1.draw(ax1, state_0)
+for patch in patches1:
+    ax1.add_patch(patch)
 
-drawn_lines = []
-for line in lidar([0, 0, 0], obstacles):
+patches2 = robot2.draw(ax2, state_0)
+for patch in patches2:
+    ax2.add_patch(patch)
+
+
+drawn_lines1 = []
+for line in lidar(state_0, obstacles):
     x, y = line.xy
-    l = ax.plot(x, y, 'g')[0]
-    drawn_lines.append(l)
+    l = ax1.plot(x, y, 'g')[0]
+    drawn_lines1.append(l)
+
+drawn_lines2 = []
+for line in lidar(state_0, obstacles):
+    x, y = line.xy
+    l = ax2.plot(x, y, 'g')[0]
+    drawn_lines2.append(l)
 
 
-ax.axis("equal")
-ax.grid("on")
+ax1.axis("equal")
+ax1.grid("on")
+
+ax2.axis("equal")
+ax2.grid("on")
+ax2.set_xlim(-20, 20)
+ax2.set_ylim(-20, 20)
 
 
 def animate(data):
     state, lines = data
-    patches = robot.draw(ax, state)
-    for line, drawn_line in zip(lines, drawn_lines):
+    patches1 = robot1.draw(ax1, state)
+    patches2 = robot2.draw(ax2, state)
+
+    for line, drawn_line in zip(lines, drawn_lines1):
         try:
             x, y = line.xy
             drawn_line.set_data(x, y)
         except NotImplementedError:
             print(line)
-    window_size = 1
-    ax.set_xlim(state[0]-window_size, state[0]+window_size)
-    ax.set_ylim(state[1]-window_size, state[1]+window_size)
-    return *patches, *drawn_lines
+    for line, drawn_line in zip(lines, drawn_lines2):
+        try:
+            x, y = line.xy
+            drawn_line.set_data(x, y)
+        except NotImplementedError:
+            print(line)
+    window_size = 3
+    ax1.set_xlim(state[0]-window_size, state[0]+window_size)
+    ax1.set_ylim(state[1]-window_size, state[1]+window_size)
+    return *patches1, *patches2, *drawn_lines1, *drawn_lines2
 
 
 animation = anim.FuncAnimation(
