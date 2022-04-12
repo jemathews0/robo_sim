@@ -33,14 +33,30 @@ robot_radius = 0.05
 robot = dd.DifferentialDrive(robot_width, robot_length, robot_radius)
 timestep = 0.02
 
-obstacles = map_tools.generate_random_obstacles(
-    20, "polygons", (0, 0), (15, 15))
+
+def load_map(filename):
+    obstacles = []
+    with open(filename) as file:
+        obj = json.load(file)
+    for obs_pts in obj["obstacles"]:
+        poly = geom.Polygon(obs_pts)
+        obstacles.append(poly)
+    start = obj["start"]
+    goal = obj["goal"]
+
+    return obstacles, start, goal
+
+
+obstacles, start, goal = load_map("map1.json")
 
 fig, ax = plt.subplots()
 
 for obs in obstacles:
     patch = dc.PolygonPatch(obs)
     ax.add_patch(patch)
+
+ax.plot(start[0], start[1], 'g.')
+ax.plot(goal[0], goal[1], 'r.')
 
 
 def lidar(state, obstacles):
@@ -60,20 +76,19 @@ def lidar(state, obstacles):
         end_y = max_dist*np.sin(theta+angle)+y
         l = geom.LineString([[x, y], [end_x, end_y]])
         for obs in obstacles:
-            l = l.difference(obs)
+            l_temp = l.difference(obs)
+            if isinstance(l_temp, geom.MultiLineString):
+                l = l_temp[0]
+            else:
+                l = l_temp
         lines.append(l)
     return lines
 
 
-def plot_line(ax, ob):
-    x, y = ob.xy
-    ax.plot(x, y, 'g')
-
-
 def producer():
-    state = [0, 0, 0]
+    state = [start[0], start[1], 0]
     omega1 = 5
-    omega2 = 6
+    omega2 = 5.6
     # timestemp = 0.02
     while True:
         #  Wait for next request from client
@@ -137,12 +152,13 @@ def animate(data):
             drawn_line.set_data(x, y)
         except NotImplementedError:
             print(line)
-    ax.set_xlim(state[0]-1, state[0]+1)
-    ax.set_ylim(state[1]-1, state[1]+1)
+    window_size = 1
+    ax.set_xlim(state[0]-window_size, state[0]+window_size)
+    ax.set_ylim(state[1]-window_size, state[1]+window_size)
     return *patches, *drawn_lines
 
 
 animation = anim.FuncAnimation(
     fig, animate, producer, interval=timestep*1000)
 
-plt.show(block=True)
+# plt.show(block=True)
