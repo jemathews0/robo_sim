@@ -13,7 +13,6 @@ import matplotlib.animation as anim
 import matplotlib.pyplot as plt
 import json
 from scipy.integrate import solve_ivp
-import map_tools
 import shapely.geometry as geom
 import descartes as dc
 import numpy as np
