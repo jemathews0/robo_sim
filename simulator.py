@@ -20,10 +20,10 @@ import numpy as np
 context = zmq.Context()
 
 pub_socket = context.socket(zmq.PUB)
-pub_socket.connect("ipc:///tmp/robotics/pub.ipc")
+pub_socket.connect("ipc:///tmp/robo_sim/pub.ipc")
 
 sub_socket = context.socket(zmq.SUB)
-sub_socket.connect("ipc:///tmp/robotics/sub.ipc")
+sub_socket.connect("ipc:///tmp/robo_sim/sub.ipc")
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"wheel_speeds")
 
 robot_width = 0.1
@@ -32,6 +32,13 @@ robot_radius = 0.05
 robot1 = dd.DifferentialDrive(robot_width, robot_length, robot_radius)
 robot2 = dd.DifferentialDrive(robot_width, robot_length, robot_radius)
 timestep = 0.02
+
+lidar_num_rays = 20
+lidar_max_dist = 0.5
+lidar_min_angle = -np.pi/2
+lidar_max_angle = np.pi/2
+
+wheel_noise_sigma = 0.5
 
 
 def load_map(filename):
@@ -75,10 +82,10 @@ def lidar(state, obstacles):
     y = state[1]
     theta = state[2]
 
-    num_rays = 20
-    max_dist = 0.5
-    min_angle = -np.pi/2
-    max_angle = np.pi/2
+    num_rays = lidar_num_rays
+    max_dist = lidar_max_dist
+    min_angle = lidar_min_angle
+    max_angle = lidar_max_angle
     angles = np.linspace(min_angle, max_angle, num_rays)
 
     lines = []
@@ -97,7 +104,7 @@ def lidar(state, obstacles):
 
 
 def add_wheel_noise(omega1, omega2):
-    sigma = 0.5
+    sigma = wheel_noise_sigma
     omega1 += np.random.normal(0, sigma)
     omega2 += np.random.normal(0, sigma)
     return omega1, omega2
@@ -116,26 +123,20 @@ def visible_landmarks(state, landmarks):
 def producer():
     global state
     state = [start[0], start[1], 0]
-    omega1 = 5
-    omega2 = 5.6
-    # timestemp = 0.02
+    omega1 = 0
+    omega2 = 0
     count = 0
     while True:
         #  Wait for next request from client
         try:
             topic, message_str = sub_socket.recv_multipart(flags=zmq.NOBLOCK)
-            message_json = json.loads(message_str)
-            omega1 = message_json["omega1"]
-            omega2 = message_json["omega2"]
+            message_dict = json.loads(message_str.decode())
+            omega1 = message_dict["omega1"]
+            omega2 = message_dict["omega2"]
             # print(omega1, omega2)
         except zmq.ZMQError:
             # print("nothing received")
             pass
-
-        # if new controls info have arrived
-        #   set the controls values
-        # simulate one time step
-        # yield the result
 
         noisy_omega1, noisy_omega2 = add_wheel_noise(omega1, omega2)
 
@@ -180,24 +181,24 @@ def producer():
         yield state, lines
 
 
-state_0 = [start[0], start[1], 0]
-patches1 = robot1.draw(ax1, state_0)
+state = [start[0], start[1], 0]
+patches1 = robot1.draw(ax1, state)
 for patch in patches1:
     ax1.add_patch(patch)
 
-patches2 = robot2.draw(ax2, state_0)
+patches2 = robot2.draw(ax2, state)
 for patch in patches2:
     ax2.add_patch(patch)
 
 
 drawn_lines1 = []
-for line in lidar(state_0, obstacles):
+for line in lidar(state, obstacles):
     x, y = line.xy
     l = ax1.plot(x, y, 'g')[0]
     drawn_lines1.append(l)
 
 drawn_lines2 = []
-for line in lidar(state_0, obstacles):
+for line in lidar(state, obstacles):
     x, y = line.xy
     l = ax2.plot(x, y, 'g')[0]
     drawn_lines2.append(l)
