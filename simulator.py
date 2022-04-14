@@ -16,6 +16,13 @@ from scipy.integrate import solve_ivp
 import shapely.geometry as geom
 import descartes as dc
 import numpy as np
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("map", help="The path to the map file to be loaded")
+args = parser.parse_args()
+
+map_name = args.map
 
 context = zmq.Context()
 
@@ -54,7 +61,7 @@ def load_map(filename):
     return obstacles, start, goal
 
 
-obstacles, start, goal = load_map("map1.json")
+obstacles, start, goal = load_map(map_name)
 
 landmarks = []
 for obs in obstacles:
