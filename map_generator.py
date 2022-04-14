@@ -8,6 +8,13 @@ Created on Mon Apr 11 15:08:29 2022
 
 import matplotlib.pyplot as plt
 import json
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("output_file", help="The path to the map file to be created")
+args = parser.parse_args()
+
+output_file = args.output_file
 
 
 curr_polygon = []
@@ -20,8 +27,6 @@ def on_press(event):
     global curr_polygon
     global polypatch
     if event.button == plt.MouseButton.LEFT:
-        print('you pressed', event.button, event.xdata, event.ydata)
-
         curr_polygon.append([event.xdata, event.ydata])
         try:
             polypatch.set_xy(curr_polygon)
@@ -31,7 +36,6 @@ def on_press(event):
         fig.canvas.draw()
 
     elif event.button == plt.MouseButton.RIGHT:
-        print('you pressed', event.button, event.xdata, event.ydata)
         curr_polygon.append([event.xdata, event.ydata])
         temp = plt.Polygon(curr_polygon)
         ax.add_patch(temp)
@@ -40,33 +44,44 @@ def on_press(event):
         curr_polygon = []
         config = {"obstacles": polygons, "start": start_pt, "goal": goal_pt}
 
-        with open("output.json", "w") as file:
-            json.dump(config, file)
+        with open(output_file, "w") as file:
+            json.dump(config, file, indent=2)
     pass
 
 
 def on_key(event):
     global start_pt
     global goal_pt
-    if event.key == "s":
+    global start_scatter
+    global goal_scatter
+    if event.key == "a":
         start_pt = (event.xdata, event.ydata)
-        ax.plot(event.xdata, event.ydata, "g.")
+        try:
+            start_scatter.set_data(event.xdata, event.ydata)
+        except:
+            start_scatter, = ax.plot(event.xdata, event.ydata, "g.")
+        fig.canvas.draw()
         config = {"obstacles": polygons, "start": start_pt, "goal": goal_pt}
 
-        with open("output.json", "w") as file:
-            json.dump(config, file)
-    elif event.key == "g":
+        with open(output_file, "w") as file:
+            json.dump(config, file, indent=2)
+    elif event.key == "b":
         goal_pt = (event.xdata, event.ydata)
-        ax.plot(event.xdata, event.ydata, "r.")
+        try:
+            goal_scatter.set_data(event.xdata, event.ydata)
+        except:
+            goal_scatter, = ax.plot(event.xdata, event.ydata, "r.")
+        fig.canvas.draw()
         config = {"obstacles": polygons, "start": start_pt, "goal": goal_pt}
 
-        with open("output.json", "w") as file:
-            json.dump(config, file)
+        with open(output_file, "w") as file:
+            json.dump(config, file, indent=2)
 
     pass
 
 
 fig, ax = plt.subplots()
+fig.suptitle("Left click to drop a vertex for a polygon.\n Right click to drop the last vertex for a polygon.\nPress 'a' to place the start point.\nPress 'b' to place the end point")
 
 fig.canvas.mpl_connect("button_press_event", on_press)
 fig.canvas.mpl_connect("key_press_event", on_key)
@@ -74,4 +89,4 @@ fig.canvas.mpl_connect("key_press_event", on_key)
 ax.set_xlim(-20, 20)
 ax.set_ylim(-20, 20)
 
-# plt.show(block=True)
+plt.show(block=True)
