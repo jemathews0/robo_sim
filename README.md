@@ -5,7 +5,7 @@ Then you will need to run the following scripts at once.
 
 ```
 ./broker.py
-./simulator.py
+./simulator.py which_map.json
 ```
 
 The broker script makes the ZeroMQ messaging easier. All nodes publish to the
@@ -44,7 +44,7 @@ converted into raw bytes with the `encode()` function.
 
 ```python
 pub_socket = context.socket(zmq.PUB)
-pub_socket.connect("ipc:///tmp/robotics/pub.ipc")
+pub_socket.connect("ipc:///tmp/robo_sim/pub.ipc")
 
 message_dict = {"key1": 20, "key2": "a string"}
 message_str = json.dumps(message_dict)
@@ -66,7 +66,8 @@ topic, message_str = sub_socket.recv_multipart()
 message_dict = json.loads(message_str.decode())
 ```
 
-If you have gotten behind on messages for some reason, you may want to read all the messages until the queue is empty. This could be done as follows:
+If you have gotten behind on messages for some reason, you may want to read all
+the messages until the queue is empty. This could be done as follows:
 
 ```python
 queue_empty = False
@@ -79,3 +80,8 @@ message_dict = json.loads(message_str.decode())
 #do something with message_dict
 ```
 
+## Map Generator
+
+You can use the `map_generator.py` script to generate maps. Just run the
+`map_generator.py output_file.json` script and follow the instructions that are
+printed.
