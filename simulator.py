@@ -57,11 +57,12 @@ def load_map(filename):
         obstacles.append(poly)
     start = obj["start"]
     goal = obj["goal"]
+    bounds = obj["bounds"]
 
-    return obstacles, start, goal
+    return obstacles, start, goal, bounds
 
 
-obstacles, start, goal = load_map(map_name)
+obstacles, start, goal, bounds = load_map(map_name)
 
 landmarks = []
 for obs in obstacles:
@@ -216,8 +217,8 @@ ax1.grid("on")
 
 ax2.axis("equal")
 ax2.grid("on")
-ax2.set_xlim(-20, 20)
-ax2.set_ylim(-20, 20)
+ax2.set_xlim(bounds[0]-1, bounds[1]+1)
+ax2.set_ylim(bounds[0]-1, bounds[1]+1)
 
 
 def animate(data):
