@@ -138,12 +138,24 @@ def producer():
         #  Wait for next request from client
         try:
             topic, message_str = sub_socket.recv_multipart(flags=zmq.NOBLOCK)
+            queue_empty = False
+            queue_count = 1
+            while not queue_empty:
+                try:
+                    topic, message_str = sub_socket.recv_multipart(
+                        flags=zmq.NOBLOCK)
+                    queue_count += 1
+                except zmq.ZMQError:
+                    queue_empty = True
+                    if queue_count > 1:
+                        print("Dropped {} old messages from queue. Receiving more than one message per timestep".format(
+                            queue_count-1))
             message_dict = json.loads(message_str.decode())
             omega1 = message_dict["omega1"]
             omega2 = message_dict["omega2"]
             # print(omega1, omega2)
         except zmq.ZMQError:
-            # print("nothing received")
+            print("nothing received")
             pass
 
         noisy_omega1, noisy_omega2 = add_wheel_noise(omega1, omega2)
