@@ -184,7 +184,7 @@ def producer():
                 marks_dict[int(index)]["theta"] = theta + \
                     np.random.normal(0, 0.01)
 
-            print(marks_dict)
+            # print(marks_dict)
             marks_str = json.dumps(marks_dict).encode()
             pub_socket.send_multipart([b"landmarks", marks_str])
 
