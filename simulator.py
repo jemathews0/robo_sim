@@ -47,6 +47,9 @@ lidar_max_angle = np.pi/2
 
 wheel_noise_sigma = 0.5
 
+landmark_range_sigma = 0.05
+landmark_bearing_sigma = 0.01
+
 
 def load_map(filename):
     obstacles = []
@@ -181,9 +184,9 @@ def producer():
                 mark = landmarks[index]
                 marks_dict[int(index)] = {}
                 marks_dict[int(index)]["dist"] = dist + \
-                    np.random.normal(0, 0.05)
+                    np.random.normal(0, landmark_range_sigma)
                 marks_dict[int(index)]["theta"] = theta + \
-                    np.random.normal(0, 0.01)
+                    np.random.normal(0, landmark_bearing_sigma)
 
             # print(marks_dict)
             marks_str = json.dumps(marks_dict).encode()
