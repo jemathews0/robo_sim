@@ -65,6 +65,7 @@ def load_map(filename):
 obstacles, start, goal, bounds = load_map(map_name)
 
 landmarks = []
+landmarks.append(goal)
 for obs in obstacles:
     landmarks += obs.boundary.coords
 landmarks = np.array(landmarks)
