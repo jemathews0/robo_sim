@@ -45,7 +45,10 @@ lidar_max_dist = 0.5
 lidar_min_angle = -np.pi/2
 lidar_max_angle = np.pi/2
 
-wheel_noise_sigma = 0.5
+wheel_noise_a1 = 0.01
+wheel_noise_a2 = 0
+wheel_noise_a3 = 0
+wheel_noise_a4 = 0.01
 
 landmark_range_sigma = 0.05
 landmark_bearing_sigma = 0.01
@@ -116,9 +119,10 @@ def lidar(state, obstacles):
 
 
 def add_wheel_noise(omega1, omega2):
-    sigma = wheel_noise_sigma
-    omega1 += np.random.normal(0, sigma)
-    omega2 += np.random.normal(0, sigma)
+    sigma1 = np.sqrt(wheel_noise_a1*omega1**2+wheel_noise_a2*omega2**2)
+    sigma2 = np.sqrt(wheel_noise_a3*omega1**2+wheel_noise_a4*omega2**2)
+    omega1 += np.random.normal(0, sigma1)
+    omega2 += np.random.normal(0, sigma2)
     return omega1, omega2
 
 
