@@ -14,10 +14,13 @@ import numpy as np
 context = zmq.Context()
 
 pub_socket = context.socket(zmq.PUB)
-pub_socket.connect("ipc:///tmp/robo_sim/pub.ipc")
+# pub_socket.connect("ipc:///tmp/robo_sim/pub.ipc")
+pub_socket.connect("tcp://localhost:5557")
 
 sub_socket = context.socket(zmq.SUB)
-sub_socket.connect("ipc:///tmp/robo_sim/sub.ipc")
+# sub_socket.connect("ipc:///tmp/robo_sim/sub.ipc")
+sub_socket.connect("tcp://localhost:5555")
+
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"state")
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"collision")
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"lidar")

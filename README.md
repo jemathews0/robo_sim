@@ -1,12 +1,15 @@
 ## Using this repo
 
-To run the simulator, first make sure the `/tmp/robo_sim` directory exists.
-Then you will need to run the following scripts at once.
+To run the simulator, open two terminals. Then you will need to run the following scripts one in each terminal. In a conda prompt shell, the following commands 
+would work.
 
 ```
-./broker.py
-./simulator.py which_map.json
+python broker.py
+python simulator.py which_map.json
 ```
+
+
+## broker.py and simulator.py
 
 The broker script makes the ZeroMQ messaging easier. All nodes publish to the
 broker and subscribe to the broker. The broker forwards all messages to all the
@@ -44,7 +47,10 @@ converted into raw bytes with the `encode()` function.
 
 ```python
 pub_socket = context.socket(zmq.PUB)
-pub_socket.connect("ipc:///tmp/robo_sim/pub.ipc")
+
+# pub_socket.connect("ipc://file_path/pub.ipc") #-----  Alternative approach using files instead of TCP.
+pub_socket.connect("tcp://localhost:5557") 
+
 
 message_dict = {"key1": 20, "key2": "a string"}
 message_str = json.dumps(message_dict)
@@ -58,7 +64,9 @@ convert it back to a dictionary using the `loads()` function.
 
 ```python
 sub_socket = context.socket(zmq.SUB)
-sub_socket.connect("ipc:///tmp/robo_sim/sub.ipc")
+# sub_socket.connect("ipc:///tmp/robo_sim/sub.ipc") #-----  Alternative approach using files instead of TCP.
+sub_socket.connect("tcp://localhost:5555") 
+
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"my_nifty_topic")
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"second_nifty_topic")
 
