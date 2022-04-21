@@ -27,10 +27,13 @@ map_name = args.map
 context = zmq.Context()
 
 pub_socket = context.socket(zmq.PUB)
-pub_socket.connect("ipc:///tmp/robo_sim/pub.ipc")
+# pub_socket.connect("ipc:///tmp/robo_sim/pub.ipc")
+pub_socket.connect("tcp://localhost:5557")
 
 sub_socket = context.socket(zmq.SUB)
-sub_socket.connect("ipc:///tmp/robo_sim/sub.ipc")
+# sub_socket.connect("ipc:///tmp/robo_sim/sub.ipc")
+sub_socket.connect("tcp://localhost:5555")
+
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"wheel_speeds")
 
 robot_width = 0.1
