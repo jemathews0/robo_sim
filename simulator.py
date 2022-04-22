@@ -261,7 +261,7 @@ def animate(data):
             drawn_line.set_data(x, y)
         except NotImplementedError:
             print(line)
-    window_size = 3
+    window_size = 1
     ax1.set_xlim(state[0]-window_size, state[0]+window_size)
     ax1.set_ylim(state[1]-window_size, state[1]+window_size)
     return *patches1, *patches2, *drawn_lines1, *drawn_lines2
