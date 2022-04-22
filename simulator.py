@@ -146,7 +146,7 @@ def producer():
     omega2 = 0
     count = 0
     while True:
-        #  Wait for next request from client
+        #  Get the newest message
         try:
             topic, message_str = sub_socket.recv_multipart(flags=zmq.NOBLOCK)
             queue_empty = False
@@ -212,6 +212,7 @@ def producer():
         yield state, lines
 
 
+# Draw the initial state with a zoomed-in and zoomed-out view
 state = [start[0], start[1], 0]
 patches1 = robot1.draw(ax1, state)
 for patch in patches1:
@@ -242,6 +243,9 @@ ax2.axis("equal")
 ax2.grid("on")
 ax2.set_xlim(bounds[0]-1, bounds[1]+1)
 ax2.set_ylim(bounds[0]-1, bounds[1]+1)
+
+# Start the animation. It pulls new data from the producer function and passes
+# it to the animate function to update the visuals
 
 
 def animate(data):
