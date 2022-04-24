@@ -24,6 +24,7 @@ sub_socket.connect("tcp://localhost:5555")
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"state")
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"collision")
 sub_socket.setsockopt(zmq.SUBSCRIBE, b"lidar")
+sub_socket.setsockopt(zmq.SUBSCRIBE, b"landmarks")
 
 
 s = 10

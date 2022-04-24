@@ -176,28 +176,30 @@ def producer():
 
         if not robot1.collides(state, obstacles):
             state = res.y[:, -1]
+            collision_dict = {"collision":False}
         else:
-            pub_socket.send_multipart([b"collision", b"{}"])
+            collision_dict = {"collision":True}
             pass
+        collision_str = json.dumps(collision_dict).encode()
+        pub_socket.send_multipart([b"collision", collision_str])
 
         lines = lidar(state, obstacles)
         dists = [line.length for line in lines]
 
         marks, mark_dists, mark_thetas = visible_landmarks(state, landmarks)
-        if len(marks) > 0:
-            # print([index[0] for index in marks])
-            marks_dict = {}
-            for index, dist, theta in zip(marks, mark_dists, mark_thetas):
-                mark = landmarks[index]
-                marks_dict[int(index)] = {}
-                marks_dict[int(index)]["dist"] = dist + \
-                    np.random.normal(0, landmark_range_sigma)
-                marks_dict[int(index)]["theta"] = theta + \
-                    np.random.normal(0, landmark_bearing_sigma)
+        marks_dict = {}
+        # print([index[0] for index in marks])
+        for index, dist, theta in zip(marks, mark_dists, mark_thetas):
+            mark = landmarks[index]
+            marks_dict[int(index)] = {}
+            marks_dict[int(index)]["dist"] = dist + \
+                np.random.normal(0, landmark_range_sigma)
+            marks_dict[int(index)]["theta"] = theta + \
+                np.random.normal(0, landmark_bearing_sigma)
 
             # print(marks_dict)
-            marks_str = json.dumps(marks_dict).encode()
-            pub_socket.send_multipart([b"landmarks", marks_str])
+        marks_str = json.dumps(marks_dict).encode()
+        pub_socket.send_multipart([b"landmarks", marks_str])
 
         # state_dict = {"x": state[0], "y": state[1], "theta": state[2]}
         # state_str = json.dumps(state_dict).encode()
