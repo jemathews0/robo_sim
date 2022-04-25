@@ -147,6 +147,7 @@ def producer():
     omega1 = 0
     omega2 = 0
     count = 0
+    t = 0
     while True:
         #  Get the newest message
         try:
@@ -175,12 +176,13 @@ def producer():
 
         res = solve_ivp(robot1.deriv, [0, timestep],
                         state, args=[[noisy_omega1, noisy_omega2], 0])
+        t += timestep
 
         if not robot1.collides(state, obstacles):
             state = res.y[:, -1]
-            collision_dict = {"collision":False}
+            collision_dict = {"timestamp": t, "collision": False}
         else:
-            collision_dict = {"collision":True}
+            collision_dict = {"timestamp": t, "collision": True}
             pass
         collision_str = json.dumps(collision_dict).encode()
         pub_socket.send_multipart([b"collision", collision_str])
@@ -189,7 +191,7 @@ def producer():
         dists = [line.length for line in lines]
 
         marks, mark_dists, mark_thetas = visible_landmarks(state, landmarks)
-        marks_dict = {}
+        marks_dict = {"timestamp": t}
         # print([index[0] for index in marks])
         for index, dist, theta in zip(marks, mark_dists, mark_thetas):
             mark = landmarks[index]
@@ -207,7 +209,7 @@ def producer():
         # state_str = json.dumps(state_dict).encode()
         # pub_socket.send_multipart([b"state", state_str])
 
-        lidar_dict = {"distances": dists}
+        lidar_dict = {"timestamp": t, "distances": dists}
         lidar_str = json.dumps(lidar_dict).encode()
         pub_socket.send_multipart([b"lidar", lidar_str])
 
