@@ -81,9 +81,11 @@ landmarks = np.array(landmarks)
 
 fig, [ax1, ax2] = plt.subplots(1, 2)
 
+obs_patches1 = []
 for obs in obstacles:
     patch = dc.PolygonPatch(obs)
     ax1.add_patch(patch)
+    obs_patches1.append(patch)
     patch = dc.PolygonPatch(obs)
     ax2.add_patch(patch)
 
@@ -239,7 +241,8 @@ for line in lidar(state, obstacles):
 
 
 ax1.axis("equal")
-ax1.grid("on")
+ax1.xaxis.set_ticklabels([])
+ax1.yaxis.set_ticklabels([])
 
 ax2.axis("equal")
 ax2.grid("on")
@@ -270,10 +273,10 @@ def animate(data):
     window_size = 1
     ax1.set_xlim(state[0]-window_size, state[0]+window_size)
     ax1.set_ylim(state[1]-window_size, state[1]+window_size)
-    return *patches1, *patches2, *drawn_lines1, *drawn_lines2
+    return *obs_patches1, *patches1, *patches2, *drawn_lines1, *drawn_lines2
 
 
 animation = anim.FuncAnimation(
-    fig, animate, producer, interval=timestep*1000)
+    fig, animate, producer, interval=timestep*1000, blit=True)
 
 plt.show(block=True)
