@@ -283,7 +283,8 @@ def animate(data):
     return *obs_patches1, *patches1, *patches2, *drawn_lines1, *drawn_lines2
 
 
+time_scale = 1  # Make this number bigger to slow down time
 animation = anim.FuncAnimation(
-    fig, animate, producer, interval=timestep*1000, blit=True)
+    fig, animate, producer, interval=timestep*1000*time_scale, blit=True)
 
 plt.show(block=True)
