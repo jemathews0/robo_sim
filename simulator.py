@@ -194,8 +194,9 @@ def producer():
         dists = [line.length for line in lines]
 
         marks, mark_dists, mark_thetas = visible_landmarks(state, landmarks)
-        marks_dict = {"timestamp": t}
+        message_dict = {"timestamp": t}
         # print([index[0] for index in marks])
+        marks_dict = {}
         for index, dist, theta in zip(marks, mark_dists, mark_thetas):
             mark = landmarks[index]
             marks_dict[int(index)] = {}
@@ -205,7 +206,8 @@ def producer():
                 np.random.normal(0, landmark_bearing_sigma)
 
             # print(marks_dict)
-        marks_str = json.dumps(marks_dict).encode()
+        message_dict["landmarks"] = marks_dict
+        marks_str = json.dumps(message_dict).encode()
         pub_socket.send_multipart([b"landmarks", marks_str])
 
         # state_dict = {"x": state[0], "y": state[1], "theta": state[2]}
