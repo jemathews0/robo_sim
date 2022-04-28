@@ -134,7 +134,10 @@ def add_wheel_noise(omega1, omega2):
 def visible_landmarks(state, landmarks):
     landmark_diffs = landmarks-np.array([state[0], state[1]])
     landmark_dists = np.linalg.norm(landmark_diffs, axis=1)
-    landmark_thetas = np.arctan2(landmark_diffs[:, 1], landmark_diffs[:, 0])
+    landmark_thetas = np.arctan2(
+        landmark_diffs[:, 1], landmark_diffs[:, 0]) - state[2]
+
+    landmark_thetas = np.remainder(landmark_thetas + np.pi, 2*np.pi) - np.pi
 
     vis = np.where((landmark_dists < 0.5) & (
         landmark_thetas > -np.pi/2) & (landmark_thetas < np.pi/2))
