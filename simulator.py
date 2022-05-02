@@ -56,7 +56,7 @@ wheel_noise_a3 = 0
 wheel_noise_a4 = 0.01
 
 landmark_range_sigma = 0.05
-landmark_bearing_sigma = 0.01
+landmark_bearing_sigma = 0.1
 
 
 def load_map(filename):
