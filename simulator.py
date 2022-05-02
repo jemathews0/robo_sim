@@ -18,6 +18,8 @@ import descartes as dc
 import numpy as np
 import argparse
 
+np.random.seed(10000)
+
 parser = argparse.ArgumentParser()
 parser.add_argument("map", help="The path to the map file to be loaded")
 args = parser.parse_args()
