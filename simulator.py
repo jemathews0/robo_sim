@@ -9,8 +9,6 @@ Created on Mon Apr 11 09:00:06 2022
 import zmq
 import time
 import differential_drive as dd
-import matplotlib.animation as anim
-import matplotlib.pyplot as plt
 import json
 from scipy.integrate import solve_ivp
 import shapely.geometry as geom
@@ -58,7 +56,6 @@ wheel_noise_a4 = 0.01
 landmark_range_sigma = 0.05
 landmark_bearing_sigma = 0.1
 
-
 def load_map(filename):
     obstacles = []
     with open(filename) as file:
@@ -80,24 +77,6 @@ landmarks.append(goal)
 for obs in obstacles:
     landmarks += obs.boundary.coords
 landmarks = np.array(landmarks)
-
-fig, [ax1, ax2] = plt.subplots(1, 2)
-
-obs_patches1 = []
-for obs in obstacles:
-    patch = dc.PolygonPatch(obs)
-    ax1.add_patch(patch)
-    obs_patches1.append(patch)
-    patch = dc.PolygonPatch(obs)
-    ax2.add_patch(patch)
-
-
-ax1.plot(start[0], start[1], 'g.')
-ax1.plot(goal[0], goal[1], 'r.')
-
-ax2.plot(start[0], start[1], 'g.')
-ax2.plot(goal[0], goal[1], 'r.')
-
 
 def lidar(state, obstacles):
     x = state[0]
@@ -226,68 +205,17 @@ def producer():
         yield state, lines
 
 
-# Draw the initial state with a zoomed-in and zoomed-out view
 state = [start[0], start[1], 0]
-patches1 = robot1.draw(ax1, state)
-for patch in patches1:
-    ax1.add_patch(patch)
-
-patches2 = robot2.draw(ax2, state)
-for patch in patches2:
-    ax2.add_patch(patch)
-
-
-drawn_lines1 = []
-for line in lidar(state, obstacles):
-    x, y = line.xy
-    l = ax1.plot(x, y, 'g')[0]
-    drawn_lines1.append(l)
-
-drawn_lines2 = []
-for line in lidar(state, obstacles):
-    x, y = line.xy
-    l = ax2.plot(x, y, 'g')[0]
-    drawn_lines2.append(l)
-
-
-ax1.axis("equal")
-ax1.xaxis.set_ticklabels([])
-ax1.yaxis.set_ticklabels([])
-
-ax2.axis("equal")
-ax2.grid("on")
-ax2.set_xlim(bounds[0]-1, bounds[1]+1)
-ax2.set_ylim(bounds[0]-1, bounds[1]+1)
 
 # Start the animation. It pulls new data from the producer function and passes
 # it to the animate function to update the visuals
 
-
 def animate(data):
-    state, lines = data
-    patches1 = robot1.draw(ax1, state)
-    patches2 = robot2.draw(ax2, state)
-
-    for line, drawn_line in zip(lines, drawn_lines1):
-        try:
-            x, y = line.xy
-            drawn_line.set_data(x, y)
-        except NotImplementedError:
-            print(line)
-    for line, drawn_line in zip(lines, drawn_lines2):
-        try:
-            x, y = line.xy
-            drawn_line.set_data(x, y)
-        except NotImplementedError:
-            print(line)
-    window_size = 1
-    ax1.set_xlim(state[0]-window_size, state[0]+window_size)
-    ax1.set_ylim(state[1]-window_size, state[1]+window_size)
-    return *obs_patches1, *patches1, *patches2, *drawn_lines1, *drawn_lines2
+    return None
 
 
-time_scale = 1  # Make this number bigger to slow down time
-animation = anim.FuncAnimation(
-    fig, animate, producer, interval=timestep*1000*time_scale, blit=True)
+start_time = time.time()
+for i, data in enumerate(producer()):
+    remaining = (i+1)*timestep+start_time-time.time()
+    time.sleep(remaining)
 
-plt.show(block=True)

@@ -6,6 +6,7 @@ would work.
 ```
 python broker.py
 python simulator.py which_map.json
+python visualizer.py which_map.json
 ```
 
 
@@ -24,6 +25,10 @@ The simulator script does the following:
 * check for collisions and output a message on the `collision` topic if a collision occurs
 * simulate the lidar and output a message on the `lidar` topic with sensor measurements
 * simulate landmark detection and output a message on the `landmarks` topic with detected landmarks
+
+The visualizer script does the following:
+
+* listen for inputs on the `state` and `lidar` topics
 * draw a nice illustration of the robot in the environment
 
 ## Sending and receiving ZeroMQ messages
