@@ -30,15 +30,15 @@ class DifferentialDrive:
         y = state[1]
         theta = state[2]
 
-        omega1 = u[0]
-        omega2 = u[1]
+        omega_r = u[0]
+        omega_l = u[1]
 
-        s = (omega1+omega2) * self.r / 2
+        s = (omega_r+omega_l) * self.r / 2
 
         xdot = s*np.cos(theta)
         ydot = s*np.sin(theta)
 
-        thetadot = self.r/self.w * (omega1-omega2)
+        thetadot = self.r/self.w * (omega_r-omega_l)
 
         return [xdot, ydot, thetadot]
 

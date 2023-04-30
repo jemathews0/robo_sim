@@ -35,13 +35,7 @@ k_dir = 1
 
 count = 0
 while True:
-    # if k > 1:
-    #     k_dir = -1
-    # elif k < -1:
-    #     k_dir = 1
-    # k += k_dir*0.01
     topic, message = sub_socket.recv_multipart()
-    # print(topic, ":", json.loads(message.decode()))
 
     if topic == b"lidar":
         max_dist = 0.5
@@ -61,13 +55,19 @@ while True:
         else:
             k = 0
 
-        # print("k: {}, s: {}".format(k, s))
+        vel_r = (s+w*k)/2
+        vel_l = (s-w*k)/2
 
-        omega1 = (s+w*k)/(2*r)
-        omega2 = (s-w*k)/(2*r)
+        twist = {"linear": s, "angular": w*k}
+        pub_socket.send_multipart(
+            [b"twist", json.dumps(twist).encode()])
 
-        wheel_speeds = {"omega1": omega1, "omega2": omega2}
+        wheel_speeds = {
+                "vel_r": vel_r,
+                "vel_l": vel_l,
+                }
         pub_socket.send_multipart(
             [b"wheel_speeds", json.dumps(wheel_speeds).encode()])
-        # print(count)
+
+
         count += 1

@@ -104,12 +104,12 @@ def lidar(state, obstacles):
     return lines
 
 
-def add_wheel_noise(omega1, omega2):
-    sigma1 = np.sqrt(wheel_noise_a1*omega1**2+wheel_noise_a2*omega2**2)
-    sigma2 = np.sqrt(wheel_noise_a3*omega1**2+wheel_noise_a4*omega2**2)
-    omega1 += np.random.normal(0, sigma1)
-    omega2 += np.random.normal(0, sigma2)
-    return omega1, omega2
+def add_wheel_noise(omega_r, omega_l):
+    sigma1 = np.sqrt(wheel_noise_a1*omega_r**2+wheel_noise_a2*omega_l**2)
+    sigma2 = np.sqrt(wheel_noise_a3*omega_r**2+wheel_noise_a4*omega_l**2)
+    omega_r += np.random.normal(0, sigma1)
+    omega_l += np.random.normal(0, sigma2)
+    return omega_r, omega_l
 
 
 def visible_landmarks(state, landmarks):
@@ -128,8 +128,8 @@ def visible_landmarks(state, landmarks):
 def producer():
     global state
     state = [start[0], start[1], 0]
-    omega1 = 0
-    omega2 = 0
+    omega_r = 0
+    omega_l = 0
     count = 0
     t = 0
     while True:
@@ -149,17 +149,19 @@ def producer():
                         print("Dropped {} old messages from queue. Receiving more than one message per timestep".format(
                             queue_count-1))
             message_dict = json.loads(message_str.decode())
-            omega1 = message_dict["omega1"]
-            omega2 = message_dict["omega2"]
-            # print(omega1, omega2)
+            vel_r = message_dict["vel_r"]
+            vel_l = message_dict["vel_l"]
+            omega_r = vel_r/robot_radius
+            omega_l = vel_l/robot_radius
+            # print(omega_r, omega_l)
         except zmq.ZMQError:
             print("nothing received")
             pass
 
-        noisy_omega1, noisy_omega2 = add_wheel_noise(omega1, omega2)
+        noisy_omega_r, noisy_omega_l = add_wheel_noise(omega_r, omega_l)
 
         res = solve_ivp(robot1.deriv, [0, timestep],
-                        state, args=[[noisy_omega1, noisy_omega2], 0])
+                        state, args=[[noisy_omega_r, noisy_omega_l], 0])
         t += timestep
 
         if not robot1.collides(state, obstacles):
