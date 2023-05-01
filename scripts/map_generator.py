@@ -91,7 +91,7 @@ boundary_pts = [[-1, -1], [-1, 21], [21, 21], [21, -1]]
 interior_pts = [[0, 0], [0, 20], [20, 20], [20, 0]][::-1]
 
 b_min = 0
-b_max = 5
+b_max = 20
 
 boundary_polys = []
 boundary_polys.append([[b_min, b_min], [b_min, b_max], [

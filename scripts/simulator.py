@@ -6,13 +6,14 @@ Created on Mon Apr 11 09:00:06 2022
 @author: jonathan
 """
 
-import zmq
+import rospy
+from geometry_msgs.msg import Pose, Twist, Quaternion, Point
+import tf
 import time
 import differential_drive as dd
 import json
 from scipy.integrate import solve_ivp
 import shapely.geometry as geom
-import descartes as dc
 import numpy as np
 import argparse
 
@@ -20,21 +21,9 @@ np.random.seed(10000)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("map", help="The path to the map file to be loaded")
-args = parser.parse_args()
+args, unknown = parser.parse_known_args()
 
 map_name = args.map
-
-context = zmq.Context()
-
-pub_socket = context.socket(zmq.PUB)
-# pub_socket.connect("ipc:///tmp/robo_sim/pub.ipc")
-pub_socket.connect("tcp://localhost:5557")
-
-sub_socket = context.socket(zmq.SUB)
-# sub_socket.connect("ipc:///tmp/robo_sim/sub.ipc")
-sub_socket.connect("tcp://localhost:5555")
-
-sub_socket.setsockopt(zmq.SUBSCRIBE, b"wheel_speeds")
 
 robot_width = 0.1
 robot_length = 0.2
@@ -55,6 +44,8 @@ wheel_noise_a4 = 0.01
 
 landmark_range_sigma = 0.05
 landmark_bearing_sigma = 0.1
+
+currentTwist = Twist()
 
 def load_map(filename):
     obstacles = []
@@ -97,7 +88,7 @@ def lidar(state, obstacles):
         for obs in obstacles:
             l_temp = l.difference(obs)
             if isinstance(l_temp, geom.MultiLineString):
-                l = l_temp[0]
+                l = l_temp.geoms[0]
             else:
                 l = l_temp
         lines.append(l)
@@ -127,36 +118,20 @@ def visible_landmarks(state, landmarks):
 
 def producer():
     global state
+    global currentTwist
     state = [start[0], start[1], 0]
     omega_r = 0
     omega_l = 0
     count = 0
     t = 0
     while True:
-        #  Get the newest message
-        try:
-            topic, message_str = sub_socket.recv_multipart(flags=zmq.NOBLOCK)
-            queue_empty = False
-            queue_count = 1
-            while not queue_empty:
-                try:
-                    topic, message_str = sub_socket.recv_multipart(
-                        flags=zmq.NOBLOCK)
-                    queue_count += 1
-                except zmq.ZMQError:
-                    queue_empty = True
-                    if queue_count > 1:
-                        print("Dropped {} old messages from queue. Receiving more than one message per timestep".format(
-                            queue_count-1))
-            message_dict = json.loads(message_str.decode())
-            vel_r = message_dict["vel_r"]
-            vel_l = message_dict["vel_l"]
-            omega_r = vel_r/robot_radius
-            omega_l = vel_l/robot_radius
-            # print(omega_r, omega_l)
-        except zmq.ZMQError:
-            print("nothing received")
-            pass
+        # Convert desired linear and angular velocity into left and right wheel speeds
+        s = currentTwist.linear.x
+        omega = currentTwist.angular.z
+        vel_r = s + omega*robot_width/2
+        vel_l = s - omega*robot_width/2
+        omega_r = vel_r/robot_radius
+        omega_l = vel_l/robot_radius
 
         noisy_omega_r, noisy_omega_l = add_wheel_noise(omega_r, omega_l)
 
@@ -170,37 +145,37 @@ def producer():
         else:
             collision_dict = {"timestamp": t, "collision": True}
             pass
-        collision_str = json.dumps(collision_dict).encode()
-        pub_socket.send_multipart([b"collision", collision_str])
+        #collision_str = json.dumps(collision_dict).encode()
+        #pub_socket.send_multipart([b"collision", collision_str])
 
         lines = lidar(state, obstacles)
         dists = [line.length for line in lines]
 
         marks, mark_dists, mark_thetas = visible_landmarks(state, landmarks)
-        message_dict = {"timestamp": t}
-        # print([index[0] for index in marks])
-        marks_dict = {}
-        for index, dist, theta in zip(marks, mark_dists, mark_thetas):
-            mark = landmarks[index]
-            marks_dict[int(index)] = {}
-            marks_dict[int(index)]["dist"] = dist + \
-                np.random.normal(0, landmark_range_sigma)
-            marks_dict[int(index)]["theta"] = theta + \
-                np.random.normal(0, landmark_bearing_sigma)
+        #message_dict = {"timestamp": t}
+        ## print([index[0] for index in marks])
+        #marks_dict = {}
+        #for index, dist, theta in zip(marks, mark_dists, mark_thetas):
+        #    mark = landmarks[index]
+        #    marks_dict[int(index)] = {}
+        #    marks_dict[int(index)]["dist"] = dist + \
+        #        np.random.normal(0, landmark_range_sigma)
+        #    marks_dict[int(index)]["theta"] = theta + \
+        #        np.random.normal(0, landmark_bearing_sigma)
 
-            # print(marks_dict)
-        message_dict["landmarks"] = marks_dict
-        marks_str = json.dumps(message_dict).encode()
-        pub_socket.send_multipart([b"landmarks", marks_str])
+        #    # print(marks_dict)
+        #message_dict["landmarks"] = marks_dict
+        #marks_str = json.dumps(message_dict).encode()
+        #pub_socket.send_multipart([b"landmarks", marks_str])
 
-        lidar_dict = {"timestamp": t, "distances": dists}
-        lidar_str = json.dumps(lidar_dict).encode()
-        pub_socket.send_multipart([b"lidar", lidar_str])
+        #lidar_dict = {"timestamp": t, "distances": dists}
+        #lidar_str = json.dumps(lidar_dict).encode()
+        #pub_socket.send_multipart([b"lidar", lidar_str])
 
-        state_dict = {"timestamp": t,
-                      "x": state[0], "y": state[1], "theta": state[2]}
-        state_str = json.dumps(state_dict).encode()
-        pub_socket.send_multipart([b"state", state_str])
+        pose = Pose()
+        pose.position = Point(state[0], state[1], 0)
+        pose.orientation = Quaternion(*tf.transformations.quaternion_from_euler(0,0,state[2]))
+        pose_pub.publish(pose)
 
         # print(count)
         count += 1
@@ -209,15 +184,19 @@ def producer():
 
 state = [start[0], start[1], 0]
 
-# Start the animation. It pulls new data from the producer function and passes
-# it to the animate function to update the visuals
-
-def animate(data):
-    return None
+def twistCallback(twist):
+    global currentTwist
+    currentTwist = twist
 
 
-start_time = time.time()
-for i, data in enumerate(producer()):
-    remaining = (i+1)*timestep+start_time-time.time()
-    time.sleep(remaining)
+rospy.init_node("simulator", anonymous=True)
+rospy.Subscriber("twist", Twist, twistCallback)
+pose_pub = rospy.Publisher("pose", Pose, queue_size=100)
+ros_rate = rospy.Rate(100)
+
+for data in producer():
+    if rospy.is_shutdown():
+        break
+    else:
+        ros_rate.sleep()
 

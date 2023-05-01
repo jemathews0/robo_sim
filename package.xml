@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>design_fair_demo</name>
+  <name>robo_sim</name>
   <version>0.0.0</version>
   <description>A package to simulate and visualize the robot</description>
 

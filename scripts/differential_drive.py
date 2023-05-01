@@ -11,7 +11,6 @@ import matplotlib as mpl
 import numpy as np
 import shapely.geometry as geom
 import shapely.affinity as aff
-import descartes as dc
 
 
 class DifferentialDrive:
@@ -22,8 +21,10 @@ class DifferentialDrive:
         points1 = [[-length/2, -width/2], [length/2, -width/2],
                    [length/2, width/2], [-length/2, width/2]]
         self.s1 = geom.Polygon(points1)
+        #self.p1 = dc.PolygonPatch(self.s1)
 
-        self.p1 = dc.PolygonPatch(self.s1)
+        self.p1 = patches.Polygon(points1)
+
 
     def deriv(self, t, state, u, params):
         x = state[0]
